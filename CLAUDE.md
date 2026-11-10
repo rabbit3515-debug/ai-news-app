@@ -9,6 +9,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 Progress against PRD section 12:
 - Done: 1 (Next.js + Clerk), 2 (Neon + Drizzle schema, migration applied), 3 (category CRUD with default-category seeding).
 - Next: 4 (RSS fetch, URL dedupe, Claude translate/summarize/categorize; needs `ANTHROPIC_API_KEY` in `.env.local`), then 5 (card UI + category filter + "원문 보기" link), 6 (Notion MCP save), 7 (polish).
+- Neon MCP server is configured (commit `fc58631`, 2026-11-10).
+- Before starting step 4: add `ANTHROPIC_API_KEY` to `.env.local` (not set yet); put RSS fetch / normalized-URL dedupe / Claude translate-summarize-categorize logic in `src/lib/` and the button's Server Action in the route folder; read the Server Actions and caching guides in `node_modules/next/dist/docs/` first.
 - The home page (`src/app/page.tsx`) is still a placeholder showing only the login state and a link to `/categories`.
 
 ## Commands

@@ -6,19 +6,11 @@ import { listArticles } from "@/lib/articles";
 import { listCategories } from "@/lib/categories";
 import { AddCategoryButton } from "./add-category-button";
 import { ArticleCard } from "./article-card";
+import { CategoryChips } from "./category-chips";
+import { parseCategory } from "./category-param";
 
-export const metadata = { title: "AI 뉴스 수집기" };
-
-const chipBase =
-  "rounded-full px-4 py-1.5 text-sm font-medium transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500";
-const chipOn = `${chipBase} bg-indigo-600 text-white`;
-const chipOff = `${chipBase} border border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-100 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800`;
-
-// ?category=<id> | none(미분류) | 없음(전체)
-function parseCategory(value: string | string[] | undefined) {
-  if (value === "none") return "none" as const;
-  if (typeof value !== "string" || !/^\d+$/.test(value)) return undefined;
-  return Number(value);
+function ChipsSkeleton() {
+  return <div aria-hidden className="h-9" />;
 }
 
 function CardSkeletons() {
@@ -34,64 +26,49 @@ function CardSkeletons() {
   );
 }
 
-async function Dashboard({
+// 칩 줄은 선택 값(searchParams)을 서버에서 읽지 않으므로, 필터를 바꿔도 다시 그려지지 않는다.
+async function CategoryNav() {
+  const { userId } = await auth.protect();
+  const categories = await listCategories(userId);
+  return (
+    // 클라이언트에서 useSearchParams 를 쓰므로 자체 Suspense 가 필요하다.
+    <Suspense fallback={<ChipsSkeleton />}>
+      <CategoryChips
+        categories={categories.map((c) => ({ id: c.id, name: c.name }))}
+      >
+        <AddCategoryButton />
+      </CategoryChips>
+    </Suspense>
+  );
+}
+
+async function ArticleList({
   searchParams,
 }: {
   searchParams: PageProps<"/dashboard">["searchParams"];
 }) {
   const { userId } = await auth.protect();
   const selected = parseCategory((await searchParams).category);
-  const [categories, items] = await Promise.all([
-    listCategories(userId),
-    listArticles(userId, selected),
-  ]);
+  const items = await listArticles(userId, selected);
+
+  if (items.length === 0) {
+    return (
+      <p className="py-20 text-center text-sm text-slate-500 dark:text-neutral-400">
+        {selected === undefined
+          ? "아직 수집된 뉴스가 없어요."
+          : "이 카테고리에는 뉴스가 없어요."}
+      </p>
+    );
+  }
 
   return (
-    <>
-      <nav aria-label="카테고리" className="flex flex-wrap items-center gap-2">
-        <Link
-          href="/dashboard"
-          aria-current={selected === undefined ? "page" : undefined}
-          className={selected === undefined ? chipOn : chipOff}
-        >
-          전체
-        </Link>
-        {categories.map((c) => (
-          <Link
-            key={c.id}
-            href={`/dashboard?category=${c.id}`}
-            aria-current={selected === c.id ? "page" : undefined}
-            className={selected === c.id ? chipOn : chipOff}
-          >
-            {c.name}
-          </Link>
-        ))}
-        <Link
-          href="/dashboard?category=none"
-          aria-current={selected === "none" ? "page" : undefined}
-          className={selected === "none" ? chipOn : chipOff}
-        >
-          미분류
-        </Link>
-        <AddCategoryButton />
-      </nav>
-
-      {items.length === 0 ? (
-        <p className="py-20 text-center text-sm text-slate-500 dark:text-neutral-400">
-          {selected === undefined
-            ? "아직 수집된 뉴스가 없어요."
-            : "이 카테고리에는 뉴스가 없어요."}
-        </p>
-      ) : (
-        <ul className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6">
-          {items.map((a) => (
-            <li key={a.id}>
-              <ArticleCard article={a} />
-            </li>
-          ))}
-        </ul>
-      )}
-    </>
+    <ul className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6">
+      {items.map((a) => (
+        <li key={a.id}>
+          <ArticleCard article={a} />
+        </li>
+      ))}
+    </ul>
   );
 }
 
@@ -115,15 +92,11 @@ export default function DashboardPage(props: PageProps<"/dashboard">) {
         </div>
       </header>
       <main className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 sm:py-8">
-        <Suspense
-          fallback={
-            <>
-              <div className="h-9" />
-              <CardSkeletons />
-            </>
-          }
-        >
-          <Dashboard searchParams={props.searchParams} />
+        <Suspense fallback={<ChipsSkeleton />}>
+          <CategoryNav />
+        </Suspense>
+        <Suspense fallback={<CardSkeletons />}>
+          <ArticleList searchParams={props.searchParams} />
         </Suspense>
       </main>
     </div>

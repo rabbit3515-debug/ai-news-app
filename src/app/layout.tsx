@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AI 뉴스",
+  title: "AI 뉴스 수집기",
   description: "해외 AI 뉴스를 한국어 카드로 요약해 주는 앱",
 };
 

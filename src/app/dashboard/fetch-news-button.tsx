@@ -20,6 +20,8 @@ export function FetchNewsButton() {
             result.added > 0
               ? `${result.added}건의 새 뉴스를 가져왔어요.`
               : "새 뉴스가 없어요.";
+          if (result.enrichFailed > 0)
+            text += ` (${result.enrichFailed}건은 번역하지 못해 원문으로 저장했어요.)`;
           if (result.failedSources.length > 0)
             text += ` (${result.failedSources.join(", ")}은(는) 가져오지 못했어요.)`;
         }

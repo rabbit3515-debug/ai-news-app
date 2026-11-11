@@ -7,28 +7,57 @@ import {
   type Article,
   type ArticleSource,
 } from "@/db/schema";
+import type { Enriched } from "@/lib/claude";
 import type { FeedItem } from "@/lib/rss";
 
-// 정규화된 URL 기준으로 중복을 건너뛰며 저장하고, 실제로 새로 저장된 건수를 돌려준다.
-// 번역·분류 전이라 title_ko/summary_ko 는 원문으로 임시 채우고 카테고리는 비워 둔다.
+// 같은 실행 안에서 URL이 겹치는 항목은 하나만 남긴다.
+export function dedupeItems(items: FeedItem[]): FeedItem[] {
+  return [...new Map(items.map((i) => [i.link, i])).values()];
+}
+
+// 이미 저장된 기사를 Claude 에 다시 보내지 않도록, 새 기사만 남긴다.
+export async function filterNewItems(
+  userId: string,
+  items: FeedItem[],
+): Promise<FeedItem[]> {
+  const unique = dedupeItems(items);
+  if (unique.length === 0) return [];
+  const existing = await db
+    .select({ link: articles.link })
+    .from(articles)
+    .where(
+      and(
+        eq(articles.userId, userId),
+        inArray(
+          articles.link,
+          unique.map((i) => i.link),
+        ),
+      ),
+    );
+  const seen = new Set(existing.map((r) => r.link));
+  return unique.filter((i) => !seen.has(i.link));
+}
+
+// items 와 같은 순서의 enriched 를 받아 저장한다. enriched[i] 가 null 이면
+// (번역 실패) 원문을 임시로 채우고 미분류로 둔다. 새로 저장된 건수를 돌려준다.
 export async function insertArticles(
   userId: string,
   items: FeedItem[],
+  enriched: (Enriched | null)[] = [],
 ): Promise<number> {
-  // 같은 실행 안에서 URL이 겹치는 항목은 하나만 남긴다.
-  const unique = [...new Map(items.map((i) => [i.link, i])).values()];
-  if (unique.length === 0) return 0;
+  if (items.length === 0) return 0;
 
   const inserted = await db
     .insert(articles)
     .values(
-      unique.map((i) => ({
+      items.map((i, idx) => ({
         userId,
         sourceName: i.sourceName,
         link: i.link,
         originalTitle: i.originalTitle,
-        titleKo: i.originalTitle,
-        summaryKo: i.summary || i.originalTitle,
+        titleKo: enriched[idx]?.titleKo ?? i.originalTitle,
+        summaryKo: enriched[idx]?.summaryKo ?? (i.summary || i.originalTitle),
+        categoryId: enriched[idx]?.categoryId ?? null,
         publishedAt: i.publishedAt,
         imageUrl: i.imageUrl,
       })),

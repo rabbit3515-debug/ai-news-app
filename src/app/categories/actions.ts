@@ -25,6 +25,7 @@ export async function addCategoryAction(formData: FormData) {
   if (!name || name.length > 50) return;
   await createCategory(userId, name, readText(formData, "description"));
   revalidatePath("/categories");
+  revalidatePath("/dashboard");
 }
 
 export async function updateCategoryAction(formData: FormData) {

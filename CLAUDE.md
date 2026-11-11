@@ -6,6 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 `PRD.md` (Korean) is the source of truth for what to build: a single-user AI-news app that collects RSS feeds (TechCrunch AI, The Verge AI) on a button click, has Claude translate/summarize/categorize to Korean, shows cards with category filtering, and saves chosen articles to a Notion database. Read `PRD.md` before implementing a feature; its section 12 gives the build order. Stack: Clerk (auth), Neon + Drizzle ORM (DB), Claude API, Notion MCP server, deployed on Vercel.
 
+`ui.md` (Korean) is the UI guide: Tailwind design tokens, the main dashboard layout (header, category chip row ending with an "add category" button, card grid), card/button/state specs, and accessibility rules. Read it before building or changing any UI, and update it first if a new color/spacing value is needed.
+
 Progress against PRD section 12:
 - Done: 1 (Next.js + Clerk), 2 (Neon + Drizzle schema, migration applied), 3 (category CRUD with default-category seeding).
 - Next: 4 (RSS fetch, URL dedupe, Claude translate/summarize/categorize; needs `ANTHROPIC_API_KEY` in `.env.local`), then 5 (card UI + category filter + "원문 보기" link), 6 (Notion MCP save), 7 (polish).

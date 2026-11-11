@@ -7,6 +7,7 @@ import { listCategories } from "@/lib/categories";
 import { AddCategoryButton } from "./add-category-button";
 import { ArticleCard } from "./article-card";
 import { CategoryChips } from "./category-chips";
+import { FetchNewsButton } from "./fetch-news-button";
 import { parseCategory } from "./category-param";
 
 function ChipsSkeleton() {
@@ -55,7 +56,7 @@ async function ArticleList({
     return (
       <p className="py-20 text-center text-sm text-slate-500 dark:text-neutral-400">
         {selected === undefined
-          ? "아직 수집된 뉴스가 없어요."
+          ? "아직 수집된 뉴스가 없어요. 위의 '뉴스 가져오기'를 눌러 보세요."
           : "이 카테고리에는 뉴스가 없어요."}
       </p>
     );
@@ -81,6 +82,7 @@ export default function DashboardPage(props: PageProps<"/dashboard">) {
             AI 뉴스 수집기
           </h1>
           <div className="flex items-center gap-3">
+            <FetchNewsButton />
             <Link
               href="/categories"
               className="text-sm text-slate-500 hover:underline dark:text-neutral-400"

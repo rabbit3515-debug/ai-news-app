@@ -7,8 +7,38 @@ import {
   type Article,
   type ArticleSource,
 } from "@/db/schema";
+import type { FeedItem } from "@/lib/rss";
 
-export type ArticleWithMeta = Article & {
+// 정규화된 URL 기준으로 중복을 건너뛰며 저장하고, 실제로 새로 저장된 건수를 돌려준다.
+// 번역·분류 전이라 title_ko/summary_ko 는 원문으로 임시 채우고 카테고리는 비워 둔다.
+export async function insertArticles(
+  userId: string,
+  items: FeedItem[],
+): Promise<number> {
+  // 같은 실행 안에서 URL이 겹치는 항목은 하나만 남긴다.
+  const unique = [...new Map(items.map((i) => [i.link, i])).values()];
+  if (unique.length === 0) return 0;
+
+  const inserted = await db
+    .insert(articles)
+    .values(
+      unique.map((i) => ({
+        userId,
+        sourceName: i.sourceName,
+        link: i.link,
+        originalTitle: i.originalTitle,
+        titleKo: i.originalTitle,
+        summaryKo: i.summary || i.originalTitle,
+        publishedAt: i.publishedAt,
+        imageUrl: i.imageUrl,
+      })),
+    )
+    .onConflictDoNothing({ target: [articles.userId, articles.link] })
+    .returning({ id: articles.id });
+  return inserted.length;
+}
+
+export type ArticleWithMeta =Article & {
   categoryName: string | null;
   // 같은 사건을 다룬 추가 출처
   sources: Pick<ArticleSource, "sourceName" | "link">[];

@@ -35,11 +35,14 @@ export async function createCategory(
   userId: string,
   name: string,
   description?: string,
-) {
-  await db
+): Promise<boolean> {
+  // 같은 이름이 이미 있으면 만들지 않고 false 를 돌려준다.
+  const rows = await db
     .insert(categories)
     .values({ userId, name, description: description || null })
-    .onConflictDoNothing();
+    .onConflictDoNothing()
+    .returning({ id: categories.id });
+  return rows.length > 0;
 }
 
 export async function updateCategory(

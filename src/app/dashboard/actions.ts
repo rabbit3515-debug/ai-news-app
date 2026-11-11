@@ -2,15 +2,22 @@
 
 import { auth } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
-import { insertArticles } from "@/lib/articles";
-import { createCategory } from "@/lib/categories";
+import { filterNewItems, insertArticles } from "@/lib/articles";
+import { createCategory, listCategories } from "@/lib/categories";
+import { enrichItems } from "@/lib/claude";
 import { fetchRecentFeedItems, FEEDS } from "@/lib/rss";
 
 export type FetchNewsResult =
-  | { ok: true; added: number; failedSources: string[] }
+  | {
+      ok: true;
+      added: number;
+      failedSources: string[];
+      // Claude 번역·분류에 실패해 원문으로 저장된 건수
+      enrichFailed: number;
+    }
   | { ok: false; error: string };
 
-// '뉴스 가져오기': 두 RSS 피드의 지난 24시간 기사를 저장한다.
+// '뉴스 가져오기': 두 RSS 피드의 지난 24시간 기사를 번역·요약·분류해 저장한다.
 export async function fetchNewsAction(): Promise<FetchNewsResult> {
   const { userId } = await auth();
   if (!userId) return { ok: false, error: "로그인이 필요해요." };
@@ -23,9 +30,16 @@ export async function fetchNewsAction(): Promise<FetchNewsResult> {
     };
 
   try {
-    const added = await insertArticles(userId, items);
+    // 이미 저장된 기사는 Claude 에 보내지 않는다.
+    const newItems = await filterNewItems(userId, items);
+    const enriched =
+      newItems.length > 0
+        ? await enrichItems(newItems, await listCategories(userId))
+        : [];
+    const enrichFailed = enriched.filter((e) => e === null).length;
+    const added = await insertArticles(userId, newItems, enriched);
     revalidatePath("/dashboard");
-    return { ok: true, added, failedSources };
+    return { ok: true, added, failedSources, enrichFailed };
   } catch {
     return {
       ok: false,

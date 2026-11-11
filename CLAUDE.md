@@ -9,10 +9,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 `ui.md` (Korean) is the UI guide: Tailwind design tokens, the main dashboard layout (header, category chip row ending with an "add category" button, card grid), card/button/state specs, and accessibility rules. Read it before building or changing any UI, and update it first if a new color/spacing value is needed.
 
 Progress against PRD section 12:
-- Done: 1 (Next.js + Clerk), 2 (Neon + Drizzle schema, migration applied), 3 (category CRUD with default-category seeding), 5 (dashboard UI at `/dashboard` on branch `feature/dashboard`: latest-first card list, category chip filter via `?category=`, inline "add category" chip, "원문 보기" link; built before 4, so it shows an empty state until articles exist).
-- Next: 4 (RSS fetch, URL dedupe, Claude translate/summarize/categorize; needs `ANTHROPIC_API_KEY` in `.env.local`; the dashboard still needs its "뉴스 가져오기" button wired to the step-4 Server Action), then 6 (Notion MCP save; adds the card's "Notion 저장" button), 7 (polish).
+- Done: 1 (Next.js + Clerk), 2 (Neon + Drizzle schema, migration applied), 3 (category CRUD with default-category seeding), 4 (the "뉴스 가져오기" button: RSS fetch of the last 24h, normalized-URL dedupe, Claude translate/summarize/categorize; merged to `main`), 5 (dashboard UI at `/dashboard`: latest-first card list, category chip filter via `?category=`, inline "add category" chip, "원문 보기" link opening in a new tab).
+- Next: 6 (Notion MCP save; adds the card's "Notion 저장" button), 7 (polish). Known gap: articles whose translation failed are saved as English originals with no category, and later fetches skip them as already stored; there is no re-translate path yet.
 - Neon MCP server is configured (commit `fc58631`, 2026-11-10).
-- Before starting step 4: add `ANTHROPIC_API_KEY` to `.env.local` (not set yet); put RSS fetch / normalized-URL dedupe / Claude translate-summarize-categorize logic in `src/lib/` and the button's Server Action in the route folder; read the Server Actions and caching guides in `node_modules/next/dist/docs/` first.
 - The home page (`src/app/page.tsx`) just redirects to `/dashboard`, and the sign-in page uses `forceRedirectUrl="/dashboard"`, so `/dashboard` is the main screen.
 
 ## Commands
@@ -31,7 +30,7 @@ No test runner is configured yet. On Windows PowerShell, `npm` may be blocked by
 
 ## Environment
 
-Secrets live in `.env.local` (git-ignored): `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`, `NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in`, `DATABASE_URL` (Neon). Planned: `ANTHROPIC_API_KEY`, plus Notion connection info and the target database ID. Env changes need a dev-server restart. `drizzle.config.ts` loads `.env.local` through `@next/env` because drizzle-kit does not read it by itself.
+Secrets live in `.env.local` (git-ignored): `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`, `NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in`, `DATABASE_URL` (Neon), `ANTHROPIC_API_KEY` (read implicitly by `new Anthropic()` in `src/lib/claude.ts`). Planned: Notion connection info and the target database ID. Env changes need a dev-server restart. `drizzle.config.ts` loads `.env.local` through `@next/env` because drizzle-kit does not read it by itself.
 
 ## Architecture
 
@@ -40,7 +39,7 @@ Secrets live in `.env.local` (git-ignored): `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`,
   - `articles` is unique on `(userId, link)`, where `link` must be the normalized URL; this is the dedupe guarantee.
   - Deleting a category sets `articles.category_id` to null (the "미분류" state); deleting an article cascades to `article_sources`.
   - `article_sources` holds extra sources for the same story so one card can list all of them.
-- **Domain logic** goes in `src/lib/` (currently `categories.ts`: list/create/update/delete, seeds the six default categories on first list; `articles.ts`: `listArticles` joins category names and extra sources, newest first by `coalesce(published_at, created_at)`). Mutations are Server Actions in the route folder (`src/app/categories/actions.ts`), and each action re-checks auth with `auth()` itself because Server Actions are reachable by direct POST.
+- **Domain logic** goes in `src/lib/` (currently `categories.ts`: list/create/update/delete, seeds the six default categories on first list; `articles.ts`: `listArticles` joins category names and extra sources, newest first by `coalesce(published_at, created_at)`, plus `filterNewItems` (drops links already stored) and `insertArticles`; `rss.ts`: fetches the two feeds in parallel, a failed feed does not block the other; `url.ts`: `normalizeUrl`, the dedupe key; `claude.ts`: `enrichItems` sends new articles to Claude in batches of 10 with a JSON-schema output and returns `null` for any article it could not translate, which `insertArticles` then stores as the English original with no category). The fetch flow is `fetchNewsAction` in `src/app/dashboard/actions.ts`: fetch, `filterNewItems`, `enrichItems`, `insertArticles`. Claude calls use `claude-haiku-5-5` at `effort: "medium"`; `"low"` made the model answer only one article of ten and leave the rest empty, so do not lower it without re-testing a full batch. Mutations are Server Actions in the route folder (`src/app/categories/actions.ts`, `src/app/dashboard/actions.ts`), and each action re-checks auth with `auth()` itself because Server Actions are reachable by direct POST.
 - **Pages that read the DB or `auth()`** must keep that work inside a `<Suspense>` boundary (see `CategoryList` in `src/app/categories/page.tsx` and `Dashboard` in `src/app/dashboard/page.tsx`, which also awaits `searchParams` inside the boundary) so `cacheComponents` prerendering still works.
 
 ## Next.js version caveat

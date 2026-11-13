@@ -1,4 +1,5 @@
 import type { ArticleWithMeta } from "@/lib/articles";
+import { SaveNotionButton } from "./save-notion-button";
 
 const dateFormat = new Intl.DateTimeFormat("ko-KR", {
   timeZone: "Asia/Seoul",
@@ -64,14 +65,20 @@ export function ArticleCard({ article }: { article: ArticleWithMeta }) {
             </span>
           ))}
         </span>
-        <a
-          href={article.link}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="shrink-0 text-sm font-medium text-indigo-600 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 dark:text-indigo-400"
-        >
-          원문 보기
-        </a>
+        <div className="flex shrink-0 items-center gap-3">
+          <a
+            href={article.link}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm font-medium text-indigo-600 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 dark:text-indigo-400"
+          >
+            원문 보기
+          </a>
+          <SaveNotionButton
+            articleId={article.id}
+            savedUrl={article.notionPageUrl}
+          />
+        </div>
       </div>
     </article>
   );

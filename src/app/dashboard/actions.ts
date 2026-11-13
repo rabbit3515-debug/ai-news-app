@@ -1,10 +1,14 @@
 "use server";
 
 import { auth } from "@clerk/nextjs/server";
+import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { db } from "@/db";
+import { articles, categories } from "@/db/schema";
 import { filterNewItems, insertArticles } from "@/lib/articles";
 import { createCategory, listCategories } from "@/lib/categories";
 import { enrichItems } from "@/lib/claude";
+import { createNotionPage } from "@/lib/notion";
 import { fetchRecentFeedItems, FEEDS } from "@/lib/rss";
 
 export type FetchNewsResult =
@@ -44,6 +48,45 @@ export async function fetchNewsAction(): Promise<FetchNewsResult> {
     return {
       ok: false,
       error: "뉴스를 저장하지 못했어요. 잠시 후 다시 시도해 주세요.",
+    };
+  }
+}
+
+export type SaveToNotionResult =
+  | { ok: true; notionPageUrl: string }
+  | { ok: false; error: string };
+
+// 카드의 'Notion 저장': 기사 한 건을 Notion 데이터베이스에 추가하고 페이지 URL 을 기록한다.
+export async function saveToNotionAction(
+  articleId: number,
+): Promise<SaveToNotionResult> {
+  const { userId } = await auth();
+  if (!userId) return { ok: false, error: "로그인이 필요해요." };
+  if (!Number.isInteger(articleId))
+    return { ok: false, error: "잘못된 요청이에요." };
+
+  try {
+    const [row] = await db
+      .select({ article: articles, categoryName: categories.name })
+      .from(articles)
+      .leftJoin(categories, eq(articles.categoryId, categories.id))
+      .where(and(eq(articles.id, articleId), eq(articles.userId, userId)));
+    if (!row) return { ok: false, error: "기사를 찾을 수 없어요." };
+    // 이미 저장된 기사는 중복 행을 만들지 않는다.
+    if (row.article.notionPageUrl)
+      return { ok: true, notionPageUrl: row.article.notionPageUrl };
+
+    const url = await createNotionPage(row.article, row.categoryName);
+    await db
+      .update(articles)
+      .set({ notionPageUrl: url })
+      .where(and(eq(articles.id, articleId), eq(articles.userId, userId)));
+    revalidatePath("/dashboard");
+    return { ok: true, notionPageUrl: url };
+  } catch {
+    return {
+      ok: false,
+      error: "Notion에 저장하지 못했어요. 잠시 후 다시 시도해 주세요.",
     };
   }
 }

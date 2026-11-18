@@ -1,5 +1,6 @@
 import type { ArticleWithMeta } from "@/lib/articles";
 import { categoryColor } from "./category-color";
+import { DeleteArticleButton } from "./delete-article-button";
 import { SaveNotionButton } from "./save-notion-button";
 
 const dateFormat = new Intl.DateTimeFormat("ko-KR", {
@@ -37,12 +38,15 @@ export function ArticleCard({ article }: { article: ArticleWithMeta }) {
             미분류
           </span>
         )}
-        <time
-          dateTime={date.toISOString()}
-          className="text-xs text-slate-500 dark:text-neutral-400"
-        >
-          {formatDate(date)}
-        </time>
+        <div className="flex items-center gap-1">
+          <time
+            dateTime={date.toISOString()}
+            className="text-xs text-slate-500 dark:text-neutral-400"
+          >
+            {formatDate(date)}
+          </time>
+          <DeleteArticleButton articleId={article.id} />
+        </div>
       </div>
 
       <h2 className="mt-3 line-clamp-2 text-base font-semibold leading-snug text-slate-900 dark:text-neutral-50">

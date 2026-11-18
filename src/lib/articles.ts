@@ -1,4 +1,4 @@
-import { and, desc, eq, inArray, isNull, sql } from "drizzle-orm";
+import { and, desc, eq, ilike, inArray, isNull, or, sql } from "drizzle-orm";
 import { db } from "@/db";
 import {
   articles,
@@ -67,7 +67,7 @@ export async function insertArticles(
   return inserted.length;
 }
 
-export type ArticleWithMeta =Article & {
+export type ArticleWithMeta = Article & {
   categoryName: string | null;
   // 같은 사건을 다룬 추가 출처
   sources: Pick<ArticleSource, "sourceName" | "link">[];
@@ -77,8 +77,22 @@ export type ArticleWithMeta =Article & {
 export async function listArticles(
   userId: string,
   categoryId?: number | "none",
+  keyword?: string,
 ): Promise<ArticleWithMeta[]> {
   const filters = [eq(articles.userId, userId)];
+  // 키워드: 한국어 제목·요약, 영어 원제목에서 대소문자 구분 없이 부분 일치.
+  // LIKE 와일드카드(% _ \)는 이스케이프해 입력한 글자 그대로 찾는다.
+  const term = keyword?.trim();
+  if (term) {
+    const pattern = `%${term.replace(/[\\%_]/g, "\\$&")}%`;
+    filters.push(
+      or(
+        ilike(articles.titleKo, pattern),
+        ilike(articles.summaryKo, pattern),
+        ilike(articles.originalTitle, pattern),
+      )!,
+    );
+  }
   if (categoryId === "none") filters.push(isNull(articles.categoryId));
   else if (categoryId !== undefined)
     filters.push(eq(articles.categoryId, categoryId));

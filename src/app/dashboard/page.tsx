@@ -8,7 +8,8 @@ import { AddCategoryButton } from "./add-category-button";
 import { ArticleCard } from "./article-card";
 import { CategoryChips } from "./category-chips";
 import { FetchNewsButton } from "./fetch-news-button";
-import { parseCategory } from "./category-param";
+import { parseCategory, parseKeyword } from "./category-param";
+import { SearchForm } from "./search-form";
 
 function ChipsSkeleton() {
   return <div aria-hidden className="h-9" />;
@@ -49,15 +50,19 @@ async function ArticleList({
   searchParams: PageProps<"/dashboard">["searchParams"];
 }) {
   const { userId } = await auth.protect();
-  const selected = parseCategory((await searchParams).category);
-  const items = await listArticles(userId, selected);
+  const sp = await searchParams;
+  const selected = parseCategory(sp.category);
+  const keyword = parseKeyword(sp.q);
+  const items = await listArticles(userId, selected, keyword);
 
   if (items.length === 0) {
     return (
       <p className="py-20 text-center text-sm text-slate-500 dark:text-neutral-400">
-        {selected === undefined
-          ? "아직 수집된 뉴스가 없어요. 위의 '뉴스 가져오기'를 눌러 보세요."
-          : "이 카테고리에는 뉴스가 없어요."}
+        {keyword !== undefined
+          ? `'${keyword}'에 해당하는 뉴스가 없어요.`
+          : selected === undefined
+            ? "아직 수집된 뉴스가 없어요. 위의 '뉴스 가져오기'를 눌러 보세요."
+            : "이 카테고리에는 뉴스가 없어요."}
       </p>
     );
   }
@@ -94,9 +99,18 @@ export default function DashboardPage(props: PageProps<"/dashboard">) {
         </div>
       </header>
       <main className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 sm:py-8">
-        <Suspense fallback={<ChipsSkeleton />}>
-          <CategoryNav />
-        </Suspense>
+        {/* 카테고리 칩 줄: 칩은 왼쪽, 검색창은 오른쪽 끝(좁은 화면에서는 아래 줄) */}
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <Suspense fallback={<ChipsSkeleton />}>
+              <CategoryNav />
+            </Suspense>
+          </div>
+          {/* useSearchParams 를 쓰므로 자체 Suspense 가 필요하다. */}
+          <Suspense fallback={<div aria-hidden className="h-9" />}>
+            <SearchForm />
+          </Suspense>
+        </div>
         <Suspense fallback={<CardSkeletons />}>
           <ArticleList searchParams={props.searchParams} />
         </Suspense>

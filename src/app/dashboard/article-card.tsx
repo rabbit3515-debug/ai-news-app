@@ -1,4 +1,5 @@
 import type { ArticleWithMeta } from "@/lib/articles";
+import { categoryColor } from "./category-color";
 import { SaveNotionButton } from "./save-notion-button";
 
 const dateFormat = new Intl.DateTimeFormat("ko-KR", {
@@ -25,8 +26,10 @@ export function ArticleCard({ article }: { article: ArticleWithMeta }) {
   return (
     <article className="flex h-full flex-col rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:shadow-md dark:border-neutral-800 dark:bg-neutral-900">
       <div className="flex items-center justify-between gap-2">
-        {article.categoryName ? (
-          <span className="rounded-full bg-indigo-50 px-2.5 py-0.5 text-xs font-medium text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
+        {article.categoryName && article.categoryId !== null ? (
+          <span
+            className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${categoryColor(article.categoryId).tag}`}
+          >
             {article.categoryName}
           </span>
         ) : (

@@ -28,6 +28,10 @@ npm run db:studio    # Drizzle Studio
 
 No test runner is configured yet. On Windows PowerShell, `npm` may be blocked by the execution policy; use `npm.cmd` or Git Bash.
 
+### Custom slash commands
+
+- `/news-workflow <branch-name>` (`.claude/commands/news-workflow.md`): the workflow for developing a new feature. It checks that the current branch is `main` (warns and asks before switching), creates the feature branch (asks for a feature description and suggests a lowercase-hyphen name if no argument is given), and reminds you of the stack and conventions from this file. When you type `완료` or `done`, it lists changed files, proposes a commit message, commits after your confirmation, merges into `main`, and summarizes the work. It does not push or delete the branch unless asked.
+
 ## Environment
 
 Secrets live in `.env.local` (git-ignored): `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`, `NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in`, `DATABASE_URL` (Neon), `ANTHROPIC_API_KEY` (read implicitly by `new Anthropic()` in `src/lib/claude.ts`). Planned: Notion connection info and the target database ID. Env changes need a dev-server restart. `drizzle.config.ts` loads `.env.local` through `@next/env` because drizzle-kit does not read it by itself.

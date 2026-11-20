@@ -2,7 +2,7 @@ import { auth } from "@clerk/nextjs/server";
 import { UserButton } from "@clerk/nextjs";
 import Link from "next/link";
 import { Suspense } from "react";
-import { listArticles } from "@/lib/articles";
+import { countArticles, listArticles } from "@/lib/articles";
 import { listCategories } from "@/lib/categories";
 import { AddCategoryButton } from "./add-category-button";
 import { ArticleCard } from "./article-card";
@@ -25,6 +25,23 @@ function CardSkeletons() {
         />
       ))}
     </ul>
+  );
+}
+
+async function TotalCount() {
+  const { userId } = await auth.protect();
+  const total = await countArticles(userId);
+  return (
+    <p
+      aria-live="polite"
+      className="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1 text-sm font-medium text-slate-700 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-300"
+    >
+      총{" "}
+      <span className="mx-1 font-semibold text-indigo-600 dark:text-indigo-400">
+        {total}
+      </span>
+      개의 뉴스
+    </p>
   );
 }
 
@@ -99,6 +116,11 @@ export default function DashboardPage(props: PageProps<"/dashboard">) {
         </div>
       </header>
       <main className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 sm:py-8">
+        <div className="mb-4 h-7">
+          <Suspense fallback={null}>
+            <TotalCount />
+          </Suspense>
+        </div>
         {/* 카테고리 칩 줄: 칩은 왼쪽, 검색창은 오른쪽 끝(좁은 화면에서는 아래 줄) */}
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0 flex-1">

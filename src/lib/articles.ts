@@ -67,6 +67,15 @@ export async function insertArticles(
   return inserted.length;
 }
 
+// 필터와 무관하게 저장된 전체 뉴스 개수
+export async function countArticles(userId: string): Promise<number> {
+  const [row] = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(articles)
+    .where(eq(articles.userId, userId));
+  return row?.count ?? 0;
+}
+
 export type ArticleWithMeta = Article & {
   categoryName: string | null;
   // 같은 사건을 다룬 추가 출처

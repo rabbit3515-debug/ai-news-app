@@ -81,6 +81,19 @@
 - 앱 이름은 `AI 뉴스 수집기`로 표기한다(`metadata.title`도 이에 맞춘다).
 - 우측에 **뉴스 가져오기** 주요 버튼과 Clerk `UserButton`을 둔다.
 
+### 5.1.1 푸터
+
+```tsx
+<footer className="mt-auto border-t border-slate-200 dark:border-neutral-800">
+  <div className="mx-auto w-full max-w-6xl px-4 py-6 text-center text-xs text-slate-500 sm:px-6 dark:text-neutral-400">
+    Copyright 2026 AI 뉴스 수집기. Powered by Claude.
+  </div>
+</footer>
+```
+
+- 대시보드 하단에 둔다. 내용이 짧아도 `mt-auto`로 화면 맨 아래에 붙는다.
+- 새 토큰 없이 헤더와 같은 테두리·보조 텍스트 색, 같은 컨테이너(`max-w-6xl`)를 쓴다.
+
 ### 5.2 버튼
 
 | 종류 | 용도 | 클래스 |

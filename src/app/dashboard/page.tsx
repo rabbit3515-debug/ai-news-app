@@ -11,6 +11,7 @@ import { CategoryChips } from "./category-chips";
 import { FetchNewsButton } from "./fetch-news-button";
 import { FetchingProvider, FetchingSwitch } from "./fetching-state";
 import { parseCategory, parseKeyword } from "./category-param";
+import { Footer } from "./footer";
 import { SearchForm } from "./search-form";
 
 function ChipsSkeleton() {
@@ -129,6 +130,7 @@ export default function DashboardPage(props: PageProps<"/dashboard">) {
             </Suspense>
           </FetchingSwitch>
         </main>
+        <Footer />
       </div>
     </FetchingProvider>
   );

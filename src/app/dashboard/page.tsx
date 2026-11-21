@@ -13,6 +13,7 @@ import { FetchingProvider, FetchingSwitch } from "./fetching-state";
 import { parseCategory, parseKeyword } from "./category-param";
 import { Footer } from "./footer";
 import { SearchForm } from "./search-form";
+import { ThemeToggle } from "@/app/theme/theme-toggle";
 
 function ChipsSkeleton() {
   return <div aria-hidden className="h-9" />;
@@ -103,6 +104,7 @@ export default function DashboardPage(props: PageProps<"/dashboard">) {
                 카테고리 관리
               </Link>
               <UserButton />
+              <ThemeToggle />
             </div>
           </div>
         </header>

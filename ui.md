@@ -8,7 +8,7 @@
 - **읽기 편함**: 본문은 충분한 줄 간격(`leading-relaxed`)과 대비를 확보한다. 한국어 요약이 주인공이다.
 - **한 가지 강조색**: 강조색은 인디고 하나만 쓴다. 주요 버튼, 선택된 카테고리, 포커스 링에만 사용한다.
 - **일관성**: 모서리 둥글기, 간격, 그림자 단계를 아래 토큰으로 통일한다.
-- 라이트/다크 모드를 모두 지원한다(`prefers-color-scheme`, 기존 `globals.css`의 `--background`/`--foreground` 사용).
+- 라이트/다크 모드를 모두 지원한다. `dark:` 변형은 `<html class="dark">`를 따르며(`globals.css`의 `@custom-variant dark`), 헤더 오른쪽 끝의 테마 토글로 전환한다. 처음 방문하면 OS 설정(`prefers-color-scheme`)을 따르고, 토글로 고른 값은 `localStorage`(`theme`)에 저장된다. `--background`/`--foreground`도 `.dark`에서 바뀐다.
 
 ## 2. 디자인 토큰
 
@@ -72,14 +72,15 @@
       AI 뉴스 수집기
     </h1>
     <div className="flex items-center gap-3">
-      {/* 뉴스 가져오기 버튼, Clerk UserButton */}
+      {/* 뉴스 가져오기 버튼, 카테고리 관리, Clerk UserButton, 테마 토글 */}
     </div>
   </div>
 </header>
 ```
 
 - 앱 이름은 `AI 뉴스 수집기`로 표기한다(`metadata.title`도 이에 맞춘다).
-- 우측에 **뉴스 가져오기** 주요 버튼과 Clerk `UserButton`을 둔다.
+- 우측에 **뉴스 가져오기** 주요 버튼과 Clerk `UserButton`을 두고, **맨 오른쪽 끝에 테마 토글**을 둔다.
+- 테마 토글(`src/app/theme/theme-toggle.tsx`): `size-9` 아이콘 버튼에 보조 버튼 테두리·색(`rounded-lg border border-slate-300 … dark:border-neutral-700`)을 쓴다. 라이트에서는 달, 다크에서는 해 아이콘을 보여 주며, 아이콘과 스크린리더용 이름(`다크 모드로 전환`/`라이트 모드로 전환`)은 `dark:` 클래스로 바꿔 hydration 불일치가 없게 한다.
 
 ### 5.1.1 푸터
 

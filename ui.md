@@ -154,7 +154,14 @@
 </article>
 ```
 
-- 구성 순서: 카테고리 배지 + 발행일 → 제목 → 요약 → 하단(출처 / 원문 보기 / Notion 저장).
+- 구성 순서: 카테고리 배지 + 발행일 → 제목 → 요약 → 구분선 → 하단(출처 / 원문 보기 / Notion 저장).
+- 위 예시 코드는 기본 골격이다. 실제 구현(`article-card.tsx`)은 다음을 더한다.
+  - **타이포**: 제목 `text-[17px] tracking-tight`, 요약 `leading-[1.7]`, 제목·요약에 `break-keep`(한글 단어 중간 줄바꿈 방지), 날짜 `tabular-nums`. 패딩은 `p-5 sm:p-6`.
+  - **하단**: `border-t border-slate-100 dark:border-neutral-800` 구분선으로 본문과 분리한다. 출처는 `font-medium`.
+  - **카드 전체 링크**: 제목 안의 `<a>`에 `after:absolute after:inset-0`(stretched link)를 걸어 카드 어디를 눌러도 원문이 열린다. 삭제·출처·원문 보기·Notion 저장은 `relative z-10`으로 위에 올린다. 포커스 링은 제목 링크 대신 카드 전체에 그린다(`has-[h2_a:focus-visible]`).
+  - **호버**: `hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md`(다크 `hover:border-neutral-700`), 제목이 인디고(`group-hover:text-indigo-700`, 다크 `indigo-300`)로 바뀌고 `원문 보기` 화살표가 우상단으로 2px 움직인다. 전환은 `duration-200`, `motion-reduce`에서는 이동·전환을 끈다.
+  - **삭제 버튼**: 평소 `opacity-0`, 카드 hover/포커스 시 나타난다. 터치 기기(`hover:none`)는 항상 보인다.
+  - **저장됨**: 체크 아이콘 + 회색 텍스트(불투명도 낮춤 대신)로 대비를 유지한다.
 - 하단 영역은 `mt-auto`로 카드 바닥에 고정해, 요약 길이가 달라도 카드 높이가 정렬되게 한다.
 - 같은 사건을 다룬 여러 출처는 하단 출처 영역에 모두 표기한다(예: `TechCrunch · The Verge`), 각 출처는 원문으로 연결되는 링크다.
 - 미분류 기사는 배지를 회색(`bg-slate-100 text-slate-600`)으로 `미분류`라고 표시한다.
@@ -173,7 +180,7 @@
 
 | 상태 | 표현 |
 | --- | --- |
-| 로딩(가져오기 중) | 카드 모양 스켈레톤(`animate-pulse`, `bg-slate-200 dark:bg-neutral-800`) 6장 |
+| 로딩(가져오기 중) | 카드 모양 스켈레톤(`h-64 animate-pulse`, `bg-slate-200 dark:bg-neutral-800`) 6장 |
 | 빈 목록 | 중앙 정렬 안내문 `아직 수집된 뉴스가 없어요. 위의 '뉴스 가져오기'를 눌러 보세요.` (`text-sm text-slate-500`, `py-20`) |
 | 필터 결과 없음 | `이 카테고리에는 뉴스가 없어요.` |
 | 오류 | 카드 목록 위에 `rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700` 배너(다크: `dark:border-red-900 dark:bg-red-950 dark:text-red-300`) |

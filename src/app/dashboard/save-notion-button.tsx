@@ -32,7 +32,23 @@ export function SaveNotionButton({
 
   if (saved)
     return (
-      <button type="button" disabled className={`${base} opacity-60`}>
+      <button
+        type="button"
+        disabled
+        className={`${base} gap-1.5 text-slate-500 dark:text-neutral-400`}
+      >
+        <svg
+          viewBox="0 0 16 16"
+          className="size-3.5"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.75"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M3.5 8.5l3 3 6-7" />
+        </svg>
         저장됨
       </button>
     );

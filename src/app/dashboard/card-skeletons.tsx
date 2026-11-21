@@ -8,7 +8,7 @@ export function CardSkeletons() {
       {Array.from({ length: 6 }, (_, i) => (
         <li
           key={i}
-          className="h-52 animate-pulse rounded-xl bg-slate-200 dark:bg-neutral-800"
+          className="h-64 animate-pulse rounded-xl bg-slate-200 dark:bg-neutral-800"
         />
       ))}
     </ul>

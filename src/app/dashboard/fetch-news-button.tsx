@@ -1,11 +1,18 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { fetchNewsAction } from "./actions";
+import { useFetching } from "./fetching-state";
 
 export function FetchNewsButton() {
   const [pending, startTransition] = useTransition();
   const [message, setMessage] = useState("");
+  const { setFetching } = useFetching();
+
+  // 카드 목록이 스켈레톤을 보여줄 수 있도록 가져오는 중 상태를 공유한다.
+  useEffect(() => {
+    setFetching(pending);
+  }, [pending, setFetching]);
 
   function handleClick() {
     setMessage("");
